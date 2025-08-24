@@ -1,31 +1,32 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
+import { Module } from "@nestjs/common";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
 
-import { APP_CONFIGS } from './config/app.config';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { RolesModule } from './modules/roles/roles.module';
-import { PermissionsModule } from './modules/permissions/permissions.module';
-import { LoggerModule } from './modules/logger/logger.module';
-import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
-import { CustomLoggerService } from './modules/logger/logger.service';
+import { APP_CONFIGS } from "./config/app.config";
+import { AuthModule } from "./modules/auth/auth.module";
+import { UsersModule } from "./modules/users/users.module";
+import { RolesModule } from "./modules/roles/roles.module";
+import { PermissionsModule } from "./modules/permissions/permissions.module";
+import { LoggerModule } from "./modules/logger/logger.module";
+import { SeederModule } from "./modules/seeder/seeder.module";
+import { JwtAuthGuard } from "./modules/auth/guards/jwt-auth.guard";
+import { CustomLoggerService } from "./modules/logger/logger.service";
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
-      type: APP_CONFIGS.DB.TYPE as 'postgres',
+      type: APP_CONFIGS.DB.TYPE as "mysql",
       host: APP_CONFIGS.DB.DB_HOST,
       port: APP_CONFIGS.DB.DB_PORT,
       username: APP_CONFIGS.DB.DB_USER,
       password: APP_CONFIGS.DB.DB_PASSWORD,
       database: APP_CONFIGS.DB.DB_NAME,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      migrations: [__dirname + '/db/migrations/*{.ts,.js}'],
+      entities: [__dirname + "/**/*.entity{.ts,.js}"],
+      migrations: [__dirname + "/db/migrations/*{.ts,.js}"],
       synchronize: APP_CONFIGS.DB.SYNCHRONIZE,
-      logging: APP_CONFIGS.ENV === 'development',
-      logger: 'advanced-console',
+      logging: false,
+      logger: "advanced-console",
     }),
     ThrottlerModule.forRoot([
       {
@@ -38,6 +39,7 @@ import { CustomLoggerService } from './modules/logger/logger.service';
     RolesModule,
     PermissionsModule,
     LoggerModule,
+    SeederModule,
   ],
   providers: [
     {

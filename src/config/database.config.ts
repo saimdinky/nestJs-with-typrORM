@@ -1,8 +1,8 @@
 import { DataSource } from "typeorm";
 import { APP_CONFIGS } from "./app.config";
 
-export const AppDataSource = new DataSource({
-  type: APP_CONFIGS.DB.TYPE as "postgres",
+const AppDataSource = new DataSource({
+  type: APP_CONFIGS.DB.TYPE as "mysql",
   host: APP_CONFIGS.DB.DB_HOST,
   port: APP_CONFIGS.DB.DB_PORT,
   username: APP_CONFIGS.DB.DB_USER,

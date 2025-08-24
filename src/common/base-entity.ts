@@ -9,21 +9,21 @@ import {
 } from "typeorm";
 
 export class BaseEntity extends TypeORMBaseEntity {
-  @PrimaryGeneratedColumn("identity", { type: "int" })
+  @PrimaryGeneratedColumn("increment", { type: "int" })
   id: number;
 
   @CreateDateColumn({
     name: "created_at",
-    type: "timestamp with time zone",
-    default: () => "now()",
+    type: "timestamp",
+    default: () => "CURRENT_TIMESTAMP",
     update: false,
   })
   createdAt: Date;
 
   @UpdateDateColumn({
     name: "updated_at",
-    type: "timestamp with time zone",
-    default: () => "now()",
+    type: "timestamp",
+    default: () => "CURRENT_TIMESTAMP",
   })
   updatedAt: Date;
 

@@ -14,7 +14,7 @@ A production-ready NestJS authentication and authorization starter project featu
 - **🔐 JWT Authentication**: Secure token-based authentication with refresh tokens
 - **👥 Role-Based Access Control**: Comprehensive RBAC with permissions and URL pattern matching
 - **🎯 Type Safety**: Full type safety with TsRest contracts and Zod validation
-- **🗄️ Database Integration**: Type-safe database operations with TypeORM migrations (supports PostgreSQL, MySQL, SQLite, etc.)
+- **🗄️ Database Integration**: Type-safe database operations with TypeORM migrations (MySQL optimized, supports PostgreSQL, SQLite, etc.)
 - **🛡️ Security Best Practices**: Bcrypt password hashing, rate limiting, CORS, SQL injection protection
 - **📚 API Documentation**: Auto-generated OpenAPI/Swagger documentation
 - **🐳 Docker Ready**: Complete containerization with database and Adminer UI
@@ -40,7 +40,7 @@ A production-ready NestJS authentication and authorization starter project featu
 ## 🛠️ Technologies
 
 - **Backend**: NestJS with TypeScript
-- **Database**: TypeORM with support for PostgreSQL, MySQL, MariaDB, SQLite, and more
+- **Database**: TypeORM with MySQL support (configured and optimized), also supports PostgreSQL, MariaDB, SQLite, and more
 - **Authentication**: JWT with Passport strategies
 - **API Contracts**: TsRest for type-safe APIs
 - **Validation**: Zod schemas for runtime type safety
@@ -57,8 +57,8 @@ The project uses TsRest for type-safe API contracts:
 // Shared contracts between client and server
 const authContract = c.router({
   register: {
-    method: 'POST',
-    path: '/auth/register',
+    method: "POST",
+    path: "/auth/register",
     body: RegisterSchema,
     responses: {
       201: AuthResponseSchema,
@@ -66,8 +66,8 @@ const authContract = c.router({
     },
   },
   login: {
-    method: 'POST',
-    path: '/auth/login',
+    method: "POST",
+    path: "/auth/login",
     body: LoginSchema,
     responses: {
       200: AuthResponseSchema,
@@ -86,7 +86,11 @@ const authContract = c.router({
 
 ## ⚡ Quick Start
 
-### Using Docker (Recommended)
+You have two options to run this application:
+
+### Option 1: Full Docker Setup (Recommended)
+
+Complete containerization with automatic migrations and MySQL database.
 
 1. **Clone the repository**:
 
@@ -95,78 +99,113 @@ git clone <repository-url>
 cd NestJsBaseSetupTypeORM
 ```
 
-2. **Create environment file**:
+2. **Start with Docker (includes automatic migrations)**:
 
 ```bash
-# Create .env
-cat > .env << EOF
-# Database Configuration (PostgreSQL example - can be configured for other databases)
-DB_TYPE=postgres
-DB_HOST=postgres
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=auth_starter_db
-DB_SYNCHRONIZE=false
-
-# JWT
-JWT_SECRET=your-super-secret-jwt-key
-JWT_TOKEN_EXPIRY=1h
-JWT_REFRESH_SECRET=your-super-secret-refresh-key
-JWT_REFRESH_EXPIRY=7d
-
-# Application
-NODE_ENV=development
-PORT=3000
-
-# Rate Limiting
-RATE_LIMIT_TTL=60000
-RATE_LIMIT_LIMIT=100
-EOF
+# Start all services (MySQL + NestJS + Adminer)
+# This automatically creates the database, runs migrations, and starts the app
+docker compose up -d --build
 ```
 
-3. **Setup Node.js version and dependencies**:
+3. **Monitor the startup**:
 
 ```bash
+# Watch logs to see migration progress
+docker compose logs -f
+
+# Check specific services
+docker compose logs -f nestJs-db    # MySQL database
+docker compose logs -f nestJs-api   # NestJS application
+```
+
+4. **Access the application**:
+   - **API**: http://localhost:3000
+   - **Swagger UI**: http://localhost:3000/api
+   - **Adminer (DB UI)**: http://localhost:8080
+     - Server: `mysql`
+     - Username: `root`
+     - Password: `Password_2547422`
+     - Database: `nestJs`
+   - **MySQL Direct Access**: `localhost:3307` (external port)
+
+### Option 2: Local Development with Docker MySQL
+
+Run the application locally while using Docker for MySQL database only.
+
+1. **Clone and setup**:
+
+```bash
+git clone <repository-url>
+cd NestJsBaseSetupTypeORM
 nvm use 22
 corepack enable
 yarn install
 ```
 
-4. **Start with Docker**:
+2. **Create environment file**:
 
 ```bash
-# Start all services (Database + NestJS + Adminer)
-yarn docker:up
+# Create .env for local development with Docker MySQL
+cat > .env << EOF
+# Database Configuration (Docker MySQL)
+DB_TYPE=mysql
+DB_HOST=localhost
+DB_PORT=3307
+DB_USER=root
+DB_PASSWORD=Password_2547422
+DB_NAME=nestJs
+DB_SYNCHRONIZE=false
 
-# Or build and start
-yarn docker:build
-yarn docker:up
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-for-development
+JWT_TOKEN_EXPIRY=1h
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-for-development
+JWT_REFRESH_EXPIRY=7d
+
+# Rate Limiting
+RATE_LIMIT_TTL=60
+RATE_LIMIT_LIMIT=100
+
+# Application
+NODE_ENV=development
+PORT=3000
+EOF
 ```
 
-5. **Run database migrations**:
+3. **Start MySQL in Docker**:
 
 ```bash
-# Wait for containers to be ready, then run migrations
+# Start only the MySQL database
+docker compose up -d mysql
+```
+
+4. **Run migrations**:
+
+```bash
+# Wait for MySQL to be ready (about 30 seconds), then run migrations
 yarn migration:run
+```
+
+5. **Start the application locally**:
+
+```bash
+# Start with hot reload
+yarn start:dev
 ```
 
 6. **Access the application**:
    - **API**: http://localhost:3000
    - **Swagger UI**: http://localhost:3000/api
-   - **Adminer (DB UI)**: http://localhost:8080
-     - Server: `postgres` (or your configured database host)
-     - Username: `postgres` (or your configured username)
-     - Password: `postgres` (or your configured password)
-     - Database: `auth_starter_db` (or your configured database name)
 
-## 💻 Local Installation
+## 💻 Local Installation with Local MySQL
+
+If you prefer to use your own local MySQL installation instead of Docker.
 
 ### Prerequisites
 
 - Node.js (>=22.x)
 - Yarn package manager
-- Database (PostgreSQL, MySQL, SQLite, etc. - as supported by TypeORM)
+- Local MySQL server running
 
 ### Setup Steps
 
@@ -180,25 +219,43 @@ corepack enable
 yarn install
 ```
 
-2. **Configure environment**:
+2. **Setup local MySQL database**:
 
 ```bash
-# Create .env with your local database credentials
-cp .env.example .env
-# Edit .env with your database settings
+# Connect to MySQL and create database
+mysql -u root -p
+CREATE DATABASE nestJs;
+exit
 ```
 
-3. **Setup database**:
+3. **Configure environment for local MySQL**:
 
 ```bash
-# Create database (example for PostgreSQL)
-createdb auth_starter_db
+# Create .env for local MySQL
+cat > .env << EOF
+# Database Configuration (Local MySQL)
+DB_TYPE=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=nestJs
+DB_SYNCHRONIZE=false
 
-# For MySQL:
-# mysql -u root -p
-# CREATE DATABASE auth_starter_db;
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-for-development
+JWT_TOKEN_EXPIRY=1h
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-for-development
+JWT_REFRESH_EXPIRY=7d
 
-# For SQLite, the database file will be created automatically
+# Rate Limiting
+RATE_LIMIT_TTL=60
+RATE_LIMIT_LIMIT=100
+
+# Application
+NODE_ENV=development
+PORT=3000
+EOF
 ```
 
 4. **Run migrations**:
@@ -215,36 +272,69 @@ yarn start:dev
 
 ## 🐳 Docker Setup
 
-We provide a complete Docker setup with database and Adminer for database management.
+Complete Docker setup with MySQL database, automatic migrations, and Adminer for database management.
 
-### Development Mode
+### Key Features
+
+- **🚀 Automatic Migrations**: Migrations run automatically when the container starts
+- **🔄 Health Checks**: Both MySQL and NestJS containers have health monitoring
+- **🛠️ Development Ready**: Hot reload and debug support
+- **📊 Database UI**: Adminer for easy database management
+
+### Quick Start
 
 ```bash
-# Start all services (NestJS + Database + Adminer)
-yarn docker:up
+# Start all services with automatic migrations
+docker compose up -d --build
 
-# View logs
-yarn docker:logs
+# View logs to monitor startup and migrations
+docker compose logs -f
 
-# Stop services
-yarn docker:down
+# Stop all services
+docker compose down
 ```
 
-### Production Mode
+### Individual Service Management
 
 ```bash
-# Build production image
-yarn docker:build
+# Start only MySQL database
+docker compose up -d mysql
 
-# Start with production configuration
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Start only the NestJS application (requires MySQL to be running)
+docker compose up -d api
+
+# View specific service logs
+docker compose logs -f nestJs-db    # MySQL logs
+docker compose logs -f nestJs-api   # Application logs
 ```
 
 ### Docker Services
 
-- **NestJS App**: http://localhost:3000
-- **Database**: localhost:5432 (PostgreSQL by default, configurable)
+- **NestJS App**: http://localhost:3000 (with automatic migration runner)
+- **MySQL Database**: localhost:3307 (external), internal port 3306
 - **Adminer**: http://localhost:8080
+
+### Docker Commands
+
+```bash
+# Rebuild containers
+docker compose up -d --build
+
+# Stop and remove containers (keeps data)
+docker compose down
+
+# Stop and remove containers + volumes (⚠️ deletes all data)
+docker compose down -v
+
+# View container status
+docker ps
+
+# Access MySQL container directly
+docker exec -it nestJs-db mysql -u root -p
+
+# View detailed logs
+docker compose logs --tail=100 -f nestJs-api
+```
 
 ## 📚 API Documentation
 
@@ -365,7 +455,17 @@ src/
 │   ├── permissions.ts             # Permission management endpoints
 │   └── index.ts                   # Combined API contract
 ├── 📁 db/
-│   └── migrations/                # Database migrations
+│   ├── migrations/                # Database migrations
+│   │   ├── 1700000001000-CreatePermissions.ts
+│   │   ├── 1700000002000-CreateRoles.ts
+│   │   ├── 1700000003000-CreateUsers.ts
+│   │   └── 1700000004000-CreateJunctionTables.ts
+│   └── seeds/                     # Database seeding
+│       ├── 1-create-permissions.seed.ts
+│       ├── 2-create-roles.seed.ts
+│       ├── 3-create-users.seed.ts
+│       ├── index.ts               # Seed runner
+│       └── run-seeds.ts           # Standalone seed script
 ├── 📁 interfaces/
 │   ├── user.interface.ts          # User interface definitions
 │   └── jwt.payload.ts             # JWT payload interface
@@ -379,6 +479,7 @@ src/
 │   ├── 📁 logger/                 # Custom logging service
 │   ├── 📁 permissions/            # Permissions management
 │   ├── 📁 roles/                  # Roles management
+│   ├── 📁 seeder/                 # Database seeding service
 │   └── 📁 users/                  # User management
 ├── 📄 app.module.ts               # Main application module
 └── 📄 main.ts                     # Application entry point
@@ -510,19 +611,19 @@ curl -X GET http://localhost:3000/api/auth/profile \
 ### Required Variables
 
 ```bash
-# Database Configuration
-DB_TYPE=postgres                # postgres | mysql | mariadb | sqlite | mssql | oracle
-DB_HOST=localhost               # 'postgres' for Docker, 'localhost' for local
-DB_PORT=5432                   # 5432 for PostgreSQL, 3306 for MySQL, etc.
-DB_USER=postgres               # Database username
-DB_PASSWORD=postgres           # Database password
-DB_NAME=auth_starter_db        # Database name
+# Database Configuration (MySQL - current setup)
+DB_TYPE=mysql                  # mysql | postgres | mariadb | sqlite | mssql | oracle
+DB_HOST=localhost              # 'mysql' for Docker, 'localhost' for local
+DB_PORT=3307                   # 3307 for Docker MySQL (external), 3306 for local MySQL
+DB_USER=root                   # Database username
+DB_PASSWORD=Password_2547422   # Database password
+DB_NAME=nestJs                 # Database name
 DB_SYNCHRONIZE=false           # Never use true in production
 
 # JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key
+JWT_SECRET=your-super-secret-jwt-key-for-development
 JWT_TOKEN_EXPIRY=1h
-JWT_REFRESH_SECRET=your-super-secret-refresh-key
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-for-development
 JWT_REFRESH_EXPIRY=7d
 
 # Application Configuration
@@ -530,24 +631,38 @@ NODE_ENV=development           # development | production | test
 PORT=3000
 
 # Rate Limiting
-RATE_LIMIT_TTL=60000          # Time window in milliseconds
+RATE_LIMIT_TTL=60             # Time window in seconds
 RATE_LIMIT_LIMIT=100          # Max requests per time window
 ```
 
-### Docker Variables
+### Docker Environment Variables
+
+The Docker containers use these environment variables automatically:
 
 ```bash
-# Database Container Configuration (PostgreSQL example)
-POSTGRES_DB=auth_starter_db
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
+# MySQL Container Configuration (set in docker-compose.yml)
+MYSQL_ROOT_PASSWORD=Password_2547422
+MYSQL_DATABASE=nestJs
 
-# For MySQL, use:
-# MYSQL_ROOT_PASSWORD=rootpassword
-# MYSQL_DATABASE=auth_starter_db
-# MYSQL_USER=appuser
-# MYSQL_PASSWORD=apppassword
+# NestJS Container Configuration (set in docker-compose.yml)
+DB_TYPE=mysql
+DB_HOST=mysql                  # Service name in Docker network
+DB_PORT=3306                   # Internal container port
+DB_USER=root
+DB_PASSWORD=Password_2547422
+DB_NAME=nestJs
+DB_SYNCHRONIZE=false
 ```
+
+### Local vs Docker Configuration
+
+| Setting       | Local MySQL     | Docker MySQL       | Docker Compose     |
+| ------------- | --------------- | ------------------ | ------------------ |
+| `DB_HOST`     | `localhost`     | `localhost`        | `mysql`            |
+| `DB_PORT`     | `3306`          | `3307`             | `3306`             |
+| `DB_USER`     | `root`          | `root`             | `root`             |
+| `DB_PASSWORD` | `your_password` | `Password_2547422` | `Password_2547422` |
+| `DB_NAME`     | `nestJs`        | `nestJs`           | `nestJs`           |
 
 ## 🧪 API Testing Examples
 
@@ -595,6 +710,110 @@ curl -X POST http://localhost:3000/api/roles \
 3. For protected routes, add JWT token in Authorization header as Bearer token
 4. Use the auto-generated Swagger UI at http://localhost:3000/api for interactive testing
 
+## 🗄️ Database Migrations & Seeding
+
+### Migrations
+
+Database migrations manage schema changes and ensure consistent database structure across environments.
+
+#### Migration Commands
+
+```bash
+# Generate a new migration (after changing entities)
+yarn migration:generate src/db/migrations/YourMigrationName
+
+# Run pending migrations
+yarn migration:run
+
+# Revert the last migration
+yarn migration:revert
+
+# Show migration status
+yarn migration:show
+
+# Direct TypeORM CLI access
+yarn typeorm [command]
+```
+
+#### Existing Migrations
+
+The project includes these pre-built migrations:
+
+1. **`1700000001000-CreatePermissions.ts`** - Creates permissions table with URL pattern matching
+2. **`1700000002000-CreateRoles.ts`** - Creates roles table
+3. **`1700000003000-CreateUsers.ts`** - Creates users table with authentication fields
+4. **`1700000004000-CreateJunctionTables.ts`** - Creates many-to-many relationship tables
+
+All migrations are MySQL-optimized with proper AUTO_INCREMENT configuration.
+
+### Database Seeding
+
+Automatic seeding creates initial data for development and testing.
+
+#### Seed Data Included
+
+**Permissions:**
+
+- `all:*` - Full system access (regex: `.*`)
+- `users:read` - Read user data
+- `users:write` - Manage users
+- `roles:read` - Read roles
+- `roles:write` - Manage roles
+- `permissions:read` - Read permissions
+- `permissions:write` - Manage permissions
+
+**Roles:**
+
+- `super_admin` - Full access (`all:*` permission)
+- `admin` - User management (`users:read`, `users:write`)
+- `user` - Read-only user access (`users:read`)
+
+**Users:** (password: `password123` for all)
+
+- `superadmin@example.com` - Super Administrator
+- `admin@example.com` - Administrator
+- `user@example.com` - Regular User
+- `test@example.com` - Test User
+
+#### Seeding Commands
+
+```bash
+# Run seeds manually (requires database connection)
+yarn seed
+
+# Seeds run automatically in Docker
+docker compose up -d --build  # Includes automatic seeding
+```
+
+#### Seeding Behavior
+
+- ✅ **Automatic**: Seeds run when Docker containers start
+- ✅ **Idempotent**: Safe to run multiple times (checks for existing data)
+- ✅ **Ordered**: Permissions → Roles → Users (maintains relationships)
+- ✅ **Logged**: All operations logged with custom logger
+
+### Database Development Workflow
+
+```bash
+# 1. Make entity changes
+# Edit src/modules/*/entities/*.entity.ts
+
+# 2. Generate migration
+yarn migration:generate src/db/migrations/YourChangeName
+
+# 3. Review generated migration
+# Edit src/db/migrations/[timestamp]-YourChangeName.ts
+
+# 4. Run migration
+yarn migration:run
+
+# 5. Update seeds if needed
+# Edit src/db/seeds/*.seed.ts
+
+# 6. Test with fresh database
+docker compose down -v && docker compose up -d --build
+```
+
 ## 🔧 Development Commands
 
 ```bash
@@ -611,6 +830,7 @@ yarn migration:generate # Generate new migration
 yarn migration:run      # Run pending migrations
 yarn migration:revert   # Revert last migration
 yarn migration:show     # Show migration status
+yarn seed               # Run database seeds manually
 
 # Testing
 yarn test               # Run unit tests
@@ -657,36 +877,55 @@ This project is licensed under the MIT License - see LICENSE file for details.
 ### Common Issues
 
 1. **Database Connection Error**:
-   - Check if your database server is running
+   - **Docker**: Check if MySQL container is running: `docker ps`
+   - **Local**: Verify MySQL server is running: `sudo systemctl status mysql`
    - Verify environment variables in `.env`
-   - For Docker: `yarn docker:logs database`
+   - Check logs: `docker compose logs nestJs-db`
 
-2. **Port Already in Use**:
-   - Change port in `docker-compose.yml` or `.env`
-   - Kill existing process: `lsof -ti:3000 | xargs kill`
+2. **Port Already in Use (MySQL)**:
+   - **Error**: `failed to bind host port for 0.0.0.0:3306`
+   - **Solution**: We use port 3307 externally to avoid conflicts with local MySQL
+   - If 3307 is also in use, change it in `docker-compose.yml`
 
 3. **Migration Issues**:
-   - Check database connection
-   - Verify migration files in `src/db/migrations/`
+   - **Automatic migrations not running**: Check Docker logs: `docker compose logs nestJs-api`
+   - **Manual migration fails**: Ensure database is accessible and `.env` is correct
+   - **MySQL user issues**: Don't use `MYSQL_USER=root` in Docker (we fixed this)
    - Run `yarn migration:show` to check status
 
-4. **JWT Token Issues**:
+4. **Docker MySQL Container Unhealthy**:
+   - **Root cause**: Usually incorrect environment variables
+   - **Check logs**: `docker compose logs nestJs-db`
+   - **Common fix**: Remove `MYSQL_USER` when using root user
+
+5. **Application Startup Issues**:
+   - **Port conflicts**: Change port in `.env` or `docker-compose.yml`
+   - **Route conflicts**: Fixed with proper OpenAPI operation ID generation
+   - Kill existing process: `lsof -ti:3000 | xargs kill`
+
+6. **JWT Token Issues**:
    - Verify JWT_SECRET in environment variables
    - Check token expiry settings
    - Ensure proper Authorization header format: `Bearer <token>`
 
-5. **Permission Denied (Docker)**:
+7. **Permission Denied (Docker)**:
    - Check Docker permissions
    - Ensure user is in docker group: `sudo usermod -aG docker $USER`
+   - Restart Docker service: `sudo systemctl restart docker`
 
-6. **Node.js Version Issues**:
+8. **Node.js Version Issues**:
    - Use Node.js 22.x: `nvm use 22`
    - Clear node_modules and reinstall: `rm -rf node_modules && yarn install`
 
-7. **Database Type Configuration**:
-   - Ensure DB_TYPE matches your database (postgres, mysql, sqlite, etc.)
-   - Update connection parameters according to your database type
-   - Check TypeORM documentation for database-specific configurations
+9. **TypeORM Migration Errors**:
+   - **"Given data source file must contain only one export"**: Fixed by removing named exports
+   - **"timestamp with time zone not supported"**: Fixed by using MySQL-compatible timestamp types
+   - **Connection timeouts**: Wait for MySQL to be fully ready (30+ seconds on first start)
+
+10. **Local MySQL vs Docker MySQL**:
+    - **Local**: Use port 3306, your local credentials
+    - **Docker**: Use port 3307 externally, `Password_2547422` password
+    - **Mixed setup**: Local app + Docker MySQL uses port 3307
 
 ## 📞 Support
 

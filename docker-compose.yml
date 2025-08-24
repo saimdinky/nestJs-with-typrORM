@@ -1,22 +1,22 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: auth-starter-db
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: nestJs-db
     restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
     environment:
-      POSTGRES_DB: auth_starter_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      MYSQL_ROOT_PASSWORD: Password_2547422
+      MYSQL_DATABASE: nestJs
     ports:
-      - '5432:5432'
+      - "3307:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,52 +27,52 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: auth-starter-api
+    container_name: nestJs-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DB_TYPE: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: auth_starter_db
+      DB_TYPE: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: Password_2547422
+      DB_NAME: nestJs
       DB_SYNCHRONIZE: false
-      JWT_SECRET: your-super-secret-jwt-key-for-production
+      JWT_SECRET: secret
       JWT_TOKEN_EXPIRY: 1h
-      JWT_REFRESH_SECRET: your-super-secret-refresh-key-for-production
+      JWT_REFRESH_SECRET: secret
       JWT_REFRESH_EXPIRY: 7d
       RATE_LIMIT_TTL: 60
       RATE_LIMIT_LIMIT: 100
       PORT: 3000
     ports:
-      - '3000:3000'
+      - "3000:3000"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     healthcheck:
-      test: ['CMD-SHELL', 'curl -f http://localhost:3000/api || exit 1']
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
   # Adminer for Database Management (Optional)
-  adminer:
-    image: adminer:4.8.1
-    container_name: auth-starter-adminer
-    restart: unless-stopped
-    ports:
-      - '8080:8080'
-    depends_on:
-      - postgres
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
+  # adminer:
+  #   image: adminer:4.8.1
+  #   container_name: nestJs-adminer
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - mysql
+  #   environment:
+  #     ADMINER_DEFAULT_SERVER: mysql
 
 volumes:
-  postgres_data:
+  mysql_data:
     driver: local
 
 networks:
   default:
-    name: auth-starter-network
+    name: nestJs-network
